@@ -18,6 +18,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3 :: Only",
 ]
+packages = [
+    { include = "eventkit" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10"
