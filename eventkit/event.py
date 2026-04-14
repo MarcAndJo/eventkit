@@ -524,7 +524,9 @@ class Event:
 
         :meth:`wait` and :meth:`__await__` are each other's inverse.
         """
+        return self.as_future().__await__()
 
+    def as_future(self):
         def on_event(*args):
             if not fut.done():
                 fut.set_result(
@@ -544,7 +546,7 @@ class Event:
         fut = asyncio.Future()
         self.connect(on_event, on_error)
         fut.add_done_callback(on_future_done)
-        return fut.__await__()
+        return fut
 
     __aiter__ = aiter
     """
