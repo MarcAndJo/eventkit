@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "eventkit"
+name = "aeventkit"
 version = "2.1.0"
 description = "Event-driven data pipelines"
 authors = ["Ewald R. de Wit"]
