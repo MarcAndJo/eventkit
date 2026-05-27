@@ -115,6 +115,43 @@ class Slots:
                         "Value %s caused exception for event %s", args, caller
                     )
 
+    async def async_call(self, caller, *args, **kwargs):
+        """Loop over all active callbacks and call them"""
+        for slot in self.slots.copy():
+            ref = slot.weakref
+            func = slot.func
+
+            try:
+                if ref:
+                    obj = ref()
+                else:
+                    obj = slot.obj
+
+                result = None
+                if obj is None:
+                    if func:
+                        result = func(*args, **kwargs)
+                else:
+                    if func:
+                        result = func(obj, *args, **kwargs)
+                    else:
+                        result = obj(*args, **kwargs)
+
+                # even though asyncio.iscoroutine() would also work here,
+                # this manual hasattr() check performs better.
+                if result and hasattr(result, "__await__"):
+                    result = await result
+            except Exception as error:
+                # It's not really clear in the documentation or usage that exceptions
+                # get returned via an 'error_event' callback. We should make sure
+                # people know this clearly so event handler callback errors are noticed.
+                if caller.error_event:
+                    caller.error_event.emit(caller, error)
+                else:
+                    logger.exception(
+                        "Value %s caused exception for event %s", args, caller
+                    )
+
 
 @dataclass(slots=False)
 class Event:
@@ -298,6 +335,10 @@ class Event:
 
         if self.done_event is not None:
             self.done_event.disconnect_obj(obj)
+
+    async def emit_async(self, *args):
+        self._value = args
+        await self._slots.async_call(self, *args)
 
     def emit(self, *args):
         """
